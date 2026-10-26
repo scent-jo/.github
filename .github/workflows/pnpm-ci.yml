@@ -2,6 +2,8 @@
 #
 # 호출 저장소 조건: 루트 package.json의 packageManager(pnpm v11 이상), 커밋된 pnpm-lock.yaml,
 # 실행할 루트 scripts
+# pnpm 12는 packageManager를 lockfile에 기록함(2문서 lockfile → GitHub 보안 알림 · 보안 업데이트 생성 안 됨)
+# → 보안 업데이트를 쓰려면 pnpm-workspace.yaml에 pmOnFail: ignore
 #
 # 입력
 #   node-version  Node 버전 (기본 '22')
