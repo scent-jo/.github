@@ -1,0 +1,63 @@
+# pnpm 저장소용 공용 PR CI (재사용 워크플로)
+#
+# 호출 저장소 조건: 루트 package.json의 packageManager(pnpm v11 이상), 커밋된 pnpm-lock.yaml,
+# 실행할 루트 scripts
+# pnpm 12는 packageManager를 lockfile에 기록함(2문서 lockfile → GitHub 보안 알림 · 보안 업데이트 생성 안 됨)
+# → 보안 업데이트를 쓰려면 pnpm-workspace.yaml에 pmOnFail: ignore
+#
+# 입력
+#   node-version  Node 버전 (기본 '22')
+#   scripts       순서대로 실행할 package.json 스크립트, 공백 구분 (기본 'format:check lint test')
+#
+# 호출 예 (호출 저장소의 .github/workflows/ci.yml)
+#   on:
+#     pull_request:
+#   permissions:
+#     contents: read
+#   jobs:
+#     ci:
+#       uses: scent-jo/.github/.github/workflows/pnpm-ci.yml@main
+#       with:
+#         node-version: '22'
+#         scripts: 'format:check lint test'
+
+name: pnpm CI
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        default: '22'
+      scripts:
+        type: string
+        default: 'format:check lint test'
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # pnpm(packageManager 버전) + Node 설치, 스토어 캐시, pnpm install --frozen-lockfile
+      - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+        with:
+          runtime: node@${{ inputs.node-version }}
+          cache: true
+          require-lockfile: true
+
+      - name: Run scripts
+        env:
+          SCRIPTS: ${{ inputs.scripts }}
+        run: |
+          read -ra scripts <<< "$SCRIPTS"
+          if [ ${#scripts[@]} -eq 0 ]; then
+            echo "::error::scripts 입력이 비어 있습니다"
+            exit 1
+          fi
+          for s in "${scripts[@]}"; do
+            pnpm run "$s"
+          done
