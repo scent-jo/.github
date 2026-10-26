@@ -1,6 +1,6 @@
 # pnpm 저장소용 공용 PR CI (재사용 워크플로)
 #
-# 호출 저장소 조건: 루트 package.json의 packageManager(pnpm 버전), 커밋된 pnpm-lock.yaml,
+# 호출 저장소 조건: 루트 package.json의 packageManager(pnpm v11 이상), 커밋된 pnpm-lock.yaml,
 # 실행할 루트 scripts
 #
 # 입력
@@ -40,14 +40,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
+      # pnpm(packageManager 버전) + Node 설치, 스토어 캐시, pnpm install --frozen-lockfile
+      - uses: pnpm/setup@v3
         with:
-          node-version: ${{ inputs.node-version }}
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+          runtime: node@${{ inputs.node-version }}
+          cache: true
+          require-lockfile: true
 
       - name: Run scripts
         env:
